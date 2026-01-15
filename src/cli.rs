@@ -35,15 +35,7 @@ pub enum Command {
     },
 
     /// Interactively select a project
-    Pick {
-        /// Use zellij (override config)
-        #[arg(long)]
-        zellij: bool,
-
-        /// Don't use zellij (override config)
-        #[arg(long)]
-        no_zellij: bool,
-    },
+    Pick,
 
     /// Remove a project
     #[command(alias = "rm")]
@@ -82,7 +74,7 @@ pub enum Command {
 pub enum ConfigAction {
     /// Get a configuration value
     Get {
-        /// Key to read (use_zellij, default_shell)
+        /// Key to read (default_shell)
         key: String,
     },
 

@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
         Command::List { tags } => cmd_list(tags),
-        Command::Pick { zellij, no_zellij } => cmd_pick(zellij, no_zellij),
+        Command::Pick => cmd_pick(),
         Command::Remove { name } => cmd_remove(name),
         Command::Init { shell } => cmd_init(shell),
         Command::Tag {
@@ -92,7 +92,7 @@ fn cmd_list(tags: Option<Vec<String>>) -> Result<()> {
     Ok(())
 }
 
-fn cmd_pick(zellij_flag: bool, no_zellij_flag: bool) -> Result<()> {
+fn cmd_pick() -> Result<()> {
     let storage = Storage::load()?;
     let projects = storage.list();
 
@@ -126,20 +126,17 @@ fn cmd_pick(zellij_flag: bool, no_zellij_flag: bool) -> Result<()> {
     let final_path = if project.is_bare_repo {
         match git::list_worktrees(&project.path) {
             Ok(worktrees) if !worktrees.is_empty() => {
-                let wt_options: Vec<String> =
-                    worktrees.iter().map(|wt| wt.name.clone()).collect();
+                let wt_options: Vec<String> = worktrees.iter().map(|wt| wt.to_string()).collect();
 
                 let wt_selection =
                     Select::new("Select a worktree:", wt_options).with_vim_mode(true);
 
                 match wt_selection.prompt() {
-                    Ok(selected) => {
-                        worktrees
-                            .iter()
-                            .find(|wt| wt.name == selected)
-                            .map(|wt| wt.path.clone())
-                            .unwrap_or_else(|| project.path.clone())
-                    }
+                    Ok(selected) => worktrees
+                        .iter()
+                        .find(|wt| wt.to_string() == selected)
+                        .map(|wt| wt.path.clone())
+                        .unwrap_or_else(|| project.path.clone()),
                     Err(_) => std::process::exit(1),
                 }
             }
@@ -149,17 +146,6 @@ fn cmd_pick(zellij_flag: bool, no_zellij_flag: bool) -> Result<()> {
         project.path.clone()
     };
 
-    // Determine if zellij should be used
-    let config = Config::load()?;
-    let _use_zellij = if no_zellij_flag {
-        false
-    } else if zellij_flag {
-        true
-    } else {
-        config.use_zellij
-    };
-
-    // Output the path - shell hook will handle zellij
     println!("{}", final_path.display());
 
     Ok(())
@@ -192,8 +178,7 @@ fn cmd_remove(name: Option<String>) -> Result<()> {
 }
 
 fn cmd_init(shell: config::Shell) -> Result<()> {
-    let config = Config::load()?;
-    let hook = shell::generate_hook(shell, config.use_zellij);
+    let hook = shell::generate_hook(shell);
     println!("{}", hook);
     Ok(())
 }

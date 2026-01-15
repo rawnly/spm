@@ -102,23 +102,14 @@ run_test "remove tag" "$SPM tag project-alpha work --remove" "Tags removed from"
 
 echo ""
 echo -e "${YELLOW}--- Test Config ---${NC}"
-run_test "config get default" "$SPM config get use_zellij" "false"
-run_test "config set" "$SPM config set use_zellij true" "use_zellij=true"
-run_test "config get after set" "$SPM config get use_zellij" "true"
-run_test "config reset" "$SPM config set use_zellij false" "use_zellij=false"
+run_test "config set default_shell" "$SPM config set default_shell zsh" "default_shell=zsh"
+run_test "config get default_shell" "$SPM config get default_shell" "zsh"
 
 echo ""
 echo -e "${YELLOW}--- Test Init ---${NC}"
 run_test "init zsh" "$SPM init zsh" "function sp()"
 run_test "init bash" "$SPM init bash" "function sp()"
 run_test "init fish" "$SPM init fish" "function sp"
-
-# Test zellij hooks
-$SPM config set use_zellij true >/dev/null
-run_test "init zsh with zellij" "$SPM init zsh" "zellij attach"
-run_test "init fish with zellij" "$SPM init fish" "zellij attach"
-run_test "init handles dead sessions" "$SPM init zsh" "delete-session"
-$SPM config set use_zellij false >/dev/null
 
 echo ""
 echo -e "${YELLOW}--- Test Remove ---${NC}"

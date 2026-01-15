@@ -15,15 +15,12 @@ pub enum Shell {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
-    #[serde(default)]
-    pub use_zellij: bool,
     pub default_shell: Option<Shell>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            use_zellij: false,
             default_shell: None,
         }
     }
@@ -56,7 +53,6 @@ impl Config {
 
     pub fn get(&self, key: &str) -> Option<String> {
         match key {
-            "use_zellij" => Some(self.use_zellij.to_string()),
             "default_shell" => self.default_shell.map(|s| s.to_string()),
             _ => None,
         }
@@ -64,9 +60,6 @@ impl Config {
 
     pub fn set(&mut self, key: &str, value: &str) -> Result<()> {
         match key {
-            "use_zellij" => {
-                self.use_zellij = value.parse()?;
-            }
             "default_shell" => {
                 self.default_shell = Some(value.parse()?);
             }
@@ -94,17 +87,14 @@ mod tests {
     #[test]
     fn test_default_config() {
         let config = Config::default();
-        assert!(!config.use_zellij);
         assert!(config.default_shell.is_none());
     }
 
     #[test]
     fn test_config_get() {
         let config = Config {
-            use_zellij: true,
             default_shell: Some(Shell::Fish),
         };
-        assert_eq!(config.get("use_zellij"), Some("true".to_string()));
         assert_eq!(config.get("default_shell"), Some("fish".to_string()));
         assert_eq!(config.get("unknown"), None);
     }
@@ -112,9 +102,6 @@ mod tests {
     #[test]
     fn test_config_set() {
         let mut config = Config::default();
-        config.set("use_zellij", "true").unwrap();
-        assert!(config.use_zellij);
-
         config.set("default_shell", "zsh").unwrap();
         assert_eq!(config.default_shell, Some(Shell::Zsh));
     }
