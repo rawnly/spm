@@ -19,29 +19,16 @@ pub fn generate_hook(shell: Shell, use_zellij: bool) -> String {
                 local selected=$(spm pick)
                 if [[ -n "$selected" ]]; then
                     local session_name=$(basename "$selected")
-                    # Check if session exists and is alive (not EXITED)
-                    local session_alive=$(zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -v EXITED)
-                    local session_dead=$(zellij list-sessions 2>/dev/null | grep "^$session_name" | grep EXITED)
 
-                    # Clean up dead sessions
-                    if [[ -n "$session_dead" ]]; then
+                    # Delete dead sessions before proceeding
+                    if zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -q EXITED; then
                         zellij delete-session "$session_name" 2>/dev/null
                     fi
 
-                    if [[ -n "$ZELLIJ" ]]; then
-                        # Already in zellij, avoid nesting
-                        if [[ -z "$session_alive" ]]; then
-                            zellij -s "$session_name" options --default-cwd "$selected" &
-                            disown
-                            sleep 0.3
-                        fi
-                        zellij action switch-session "$session_name"
+                    if zellij list-sessions 2>/dev/null | grep -q "^$session_name"; then
+                        zellij attach "$session_name"
                     else
-                        if [[ -n "$session_alive" ]]; then
-                            zellij attach "$session_name"
-                        else
-                            zellij -s "$session_name" options --default-cwd "$selected"
-                        fi
+                        zellij -s "$session_name" options --default-cwd "$selected"
                     fi
                 fi
             }
@@ -63,29 +50,16 @@ pub fn generate_hook(shell: Shell, use_zellij: bool) -> String {
                 local selected=$(spm pick)
                 if [[ -n "$selected" ]]; then
                     local session_name=$(basename "$selected")
-                    # Check if session exists and is alive (not EXITED)
-                    local session_alive=$(zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -v EXITED)
-                    local session_dead=$(zellij list-sessions 2>/dev/null | grep "^$session_name" | grep EXITED)
 
-                    # Clean up dead sessions
-                    if [[ -n "$session_dead" ]]; then
+                    # Delete dead sessions before proceeding
+                    if zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -q EXITED; then
                         zellij delete-session "$session_name" 2>/dev/null
                     fi
 
-                    if [[ -n "$ZELLIJ" ]]; then
-                        # Already in zellij, avoid nesting
-                        if [[ -z "$session_alive" ]]; then
-                            zellij -s "$session_name" options --default-cwd "$selected" &
-                            disown
-                            sleep 0.3
-                        fi
-                        zellij action switch-session "$session_name"
+                    if zellij list-sessions 2>/dev/null | grep -q "^$session_name"; then
+                        zellij attach "$session_name"
                     else
-                        if [[ -n "$session_alive" ]]; then
-                            zellij attach "$session_name"
-                        else
-                            zellij -s "$session_name" options --default-cwd "$selected"
-                        fi
+                        zellij -s "$session_name" options --default-cwd "$selected"
                     fi
                 fi
             }
@@ -107,29 +81,16 @@ pub fn generate_hook(shell: Shell, use_zellij: bool) -> String {
                 set selected (spm pick)
                 if test -n "$selected"
                     set session_name (basename "$selected")
-                    # Check if session exists and is alive (not EXITED)
-                    set session_alive (zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -v EXITED)
-                    set session_dead (zellij list-sessions 2>/dev/null | grep "^$session_name" | grep EXITED)
 
-                    # Clean up dead sessions
-                    if test -n "$session_dead"
+                    # Delete dead sessions before proceeding
+                    if zellij list-sessions 2>/dev/null | grep "^$session_name" | grep -q EXITED
                         zellij delete-session "$session_name" 2>/dev/null
                     end
 
-                    if test -n "$ZELLIJ"
-                        # Already in zellij, avoid nesting
-                        if test -z "$session_alive"
-                            zellij -s "$session_name" options --default-cwd "$selected" &
-                            disown
-                            sleep 0.3
-                        end
-                        zellij action switch-session "$session_name"
+                    if zellij list-sessions 2>/dev/null | grep -q "^$session_name"
+                        zellij attach "$session_name"
                     else
-                        if test -n "$session_alive"
-                            zellij attach "$session_name"
-                        else
-                            zellij -s "$session_name" options --default-cwd "$selected"
-                        end
+                        zellij -s "$session_name" options --default-cwd "$selected"
                     end
                 end
             end
@@ -153,12 +114,9 @@ mod tests {
     fn test_zsh_hook_with_zellij() {
         let hook = generate_hook(Shell::Zsh, true);
         assert!(hook.contains("function sp()"));
-        assert!(hook.contains("zellij"));
         assert!(hook.contains("zellij attach"));
-        assert!(hook.contains("zellij action switch-session"));
-        assert!(hook.contains("$ZELLIJ"));
         assert!(hook.contains("delete-session"));
-        assert!(!hook.contains("cd \"$selected\""));
+        assert!(hook.contains("EXITED"));
     }
 
     #[test]
@@ -180,10 +138,8 @@ mod tests {
     fn test_fish_hook_with_zellij() {
         let hook = generate_hook(Shell::Fish, true);
         assert!(hook.contains("function sp"));
-        assert!(hook.contains("zellij"));
-        assert!(hook.contains("set session_name"));
-        assert!(hook.contains("zellij action switch-session"));
-        assert!(hook.contains("$ZELLIJ"));
+        assert!(hook.contains("zellij attach"));
         assert!(hook.contains("delete-session"));
+        assert!(hook.contains("EXITED"));
     }
 }
