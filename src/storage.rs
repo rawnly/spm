@@ -4,6 +4,7 @@ use anyhow::Result;
 use std::fs;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone)]
 pub struct Storage {
     projects: Vec<Project>,
 }
@@ -39,9 +40,22 @@ impl Storage {
             anyhow::bail!("Project '{}' already exists", project.name);
         }
         if self.find_by_path(&project.path).is_some() {
-            anyhow::bail!("Project at path '{}' already exists", project.path.display());
+            anyhow::bail!(
+                "Project at path '{}' already exists",
+                project.path.display()
+            );
         }
         self.projects.push(project);
+        self.save()
+    }
+
+    pub fn remove_all(&mut self) -> Result<()> {
+        self.projects = vec![];
+        self.save()
+    }
+
+    pub fn remove_all_filtered(&mut self, tags: &[String]) -> Result<()> {
+        self.projects.retain(|project| project.has_any_tag(tags));
         self.save()
     }
 
@@ -54,15 +68,18 @@ impl Storage {
         self.save()
     }
 
-    pub fn list(&self) -> &[Project] {
-        &self.projects
+    pub fn list(&self) -> Vec<&Project> {
+        self.projects.iter().collect()
     }
 
     pub fn list_filtered(&self, tags: &[String]) -> Vec<&Project> {
         if tags.is_empty() {
             self.projects.iter().collect()
         } else {
-            self.projects.iter().filter(|p| p.has_any_tag(tags)).collect()
+            self.projects
+                .iter()
+                .filter(|p| p.has_any_tag(tags))
+                .collect()
         }
     }
 

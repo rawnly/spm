@@ -20,8 +20,8 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
         Command::List { tags } => cmd_list(tags),
-        Command::Pick => cmd_pick(),
-        Command::Remove { name } => cmd_remove(name),
+        Command::Pick { tags } => cmd_pick(tags),
+        Command::Remove { name, all, tags } => cmd_remove(name, tags, all),
         Command::Init { shell } => cmd_init(shell),
         Command::Tag {
             project,
@@ -92,52 +92,35 @@ fn cmd_list(tags: Option<Vec<String>>) -> Result<()> {
     Ok(())
 }
 
-fn cmd_pick() -> Result<()> {
+fn cmd_pick(tags: Option<Vec<String>>) -> Result<()> {
     let storage = Storage::load()?;
-    let projects = storage.list();
+
+    let projects = match tags {
+        None => storage.list(),
+        Some(tags) => storage.list_filtered(&tags),
+    };
 
     if projects.is_empty() {
         eprintln!("No projects available");
         std::process::exit(1);
     }
 
-    let options: Vec<String> = projects
-        .iter()
-        .map(|p| {
-            let bare = if p.is_bare_repo { " (bare)" } else { "" };
-            format!("{}{}", p.name, bare)
-        })
-        .collect();
-
-    let selection = Select::new("Select a project:", options)
+    let project = Select::new("Select a project:", projects)
         .with_vim_mode(true)
-        .prompt();
-
-    let selected_name = match selection {
-        Ok(s) => s.trim_end_matches(" (bare)").to_string(),
-        Err(_) => std::process::exit(1),
-    };
-
-    let project = storage
-        .find_by_name(&selected_name)
-        .ok_or_else(|| anyhow::anyhow!("Project not found"))?;
+        .prompt()?;
 
     // If bare repo, show available worktrees
     let final_path = if project.is_bare_repo {
         match git::list_worktrees(&project.path) {
             Ok(worktrees) if !worktrees.is_empty() => {
-                let wt_options: Vec<String> = worktrees.iter().map(|wt| wt.to_string()).collect();
+                let wt_selection = Select::new("Select a worktree:", worktrees)
+                    .with_help_message("you can skip this to pick the project root")
+                    .with_vim_mode(false);
 
-                let wt_selection =
-                    Select::new("Select a worktree:", wt_options).with_vim_mode(true);
-
-                match wt_selection.prompt() {
-                    Ok(selected) => worktrees
-                        .iter()
-                        .find(|wt| wt.to_string() == selected)
-                        .map(|wt| wt.path.clone())
-                        .unwrap_or_else(|| project.path.clone()),
+                match wt_selection.prompt_skippable() {
+                    Ok(Some(selected)) => selected.path.clone(),
                     Err(_) => std::process::exit(1),
+                    _ => project.path.clone(),
                 }
             }
             _ => project.path.clone(),
@@ -151,8 +134,27 @@ fn cmd_pick() -> Result<()> {
     Ok(())
 }
 
-fn cmd_remove(name: Option<String>) -> Result<()> {
+fn cmd_remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Result<()> {
     let mut storage = Storage::load()?;
+
+    if all {
+        match tags {
+            None => {
+                for project in storage.list() {
+                    println!("Project {} removed", &project.name);
+                }
+
+                return storage.remove_all();
+            }
+            Some(tags) => {
+                for project in storage.list_filtered(&tags) {
+                    println!("Project {} removed", &project.name);
+                }
+
+                return storage.remove_all_filtered(&tags);
+            }
+        }
+    }
 
     let name = match name {
         Some(n) => n,
@@ -183,8 +185,17 @@ fn cmd_init(shell: config::Shell) -> Result<()> {
     Ok(())
 }
 
-fn cmd_tag(project_name: String, tags: Vec<String>, remove: bool) -> Result<()> {
+fn cmd_tag(project_name: Option<String>, tags: Vec<String>, remove: bool) -> Result<()> {
     let mut storage = Storage::load()?;
+
+    let project_name = match project_name {
+        Some(name) => name,
+        None => {
+            let project = Select::new("Select a project:", storage.list()).prompt()?;
+
+            project.clone().name
+        }
+    };
 
     storage.update(&project_name, |project| {
         for tag in &tags {

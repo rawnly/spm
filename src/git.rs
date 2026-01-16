@@ -52,6 +52,6 @@ impl std::fmt::Display for Worktree {
             return write!(f, "{} [{}]", self.name, branch.replace("refs/heads/", ""));
         }
 
-        write!(f, "{} ({})", self.name, self.path.display())
+        write!(f, "{}", self.name)
     }
 }

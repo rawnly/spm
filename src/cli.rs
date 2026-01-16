@@ -35,11 +35,20 @@ pub enum Command {
     },
 
     /// Interactively select a project
-    Pick,
+    Pick {
+        #[arg(short, long, value_delimiter = ',')]
+        tags: Option<Vec<String>>,
+    },
 
     /// Remove a project
     #[command(alias = "rm")]
     Remove {
+        #[arg(short, long)]
+        all: bool,
+
+        #[arg(short, long, value_delimiter = ',')]
+        tags: Option<Vec<String>>,
+
         /// Project name to remove
         name: Option<String>,
     },
@@ -53,7 +62,7 @@ pub enum Command {
     /// Manage project tags
     Tag {
         /// Project name
-        project: String,
+        project: Option<String>,
 
         /// Tags to add
         tags: Vec<String>,

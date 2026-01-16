@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
+use std::{fmt, path::PathBuf};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Project {
@@ -11,6 +11,16 @@ pub struct Project {
     #[serde(default)]
     pub is_bare_repo: bool,
     pub added_at: DateTime<Utc>,
+}
+
+impl fmt::Display for Project {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.is_bare_repo {
+            return write!(f, "{} (bare)", self.name);
+        }
+
+        write!(f, "{}", self.name)
+    }
 }
 
 impl Project {
