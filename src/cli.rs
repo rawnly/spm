@@ -36,6 +36,9 @@ pub enum Command {
 
     /// Interactively select a project
     Pick {
+        /// Search project
+        query: Option<String>,
+
         #[arg(short, long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
     },

@@ -20,7 +20,7 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
         Command::List { tags } => cmd_list(tags),
-        Command::Pick { tags } => cmd_pick(tags),
+        Command::Pick { tags, query } => cmd_pick(query, tags),
         Command::Remove { name, all, tags } => cmd_remove(name, tags, all),
         Command::Init { shell } => cmd_init(shell),
         Command::Tag {
@@ -92,12 +92,12 @@ fn cmd_list(tags: Option<Vec<String>>) -> Result<()> {
     Ok(())
 }
 
-fn cmd_pick(tags: Option<Vec<String>>) -> Result<()> {
+fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     let storage = Storage::load()?;
 
-    let projects = match tags {
-        None => storage.list(),
-        Some(tags) => storage.list_filtered(&tags),
+    let projects: Vec<Project> = match tags {
+        None => storage.list().into_iter().cloned().collect(),
+        Some(tags) => storage.list_filtered(&tags).into_iter().cloned().collect(),
     };
 
     if projects.is_empty() {
@@ -105,9 +105,26 @@ fn cmd_pick(tags: Option<Vec<String>>) -> Result<()> {
         std::process::exit(1);
     }
 
-    let project = Select::new("Select a project:", projects)
-        .with_vim_mode(true)
-        .prompt()?;
+    let prompt_project_selection = |projects: &[Project], q: Option<String>| {
+        Select::new("Select a project:", projects.to_vec())
+            .with_starting_filter_input(&q.unwrap_or_default())
+            .with_vim_mode(true)
+            .prompt()
+    };
+
+    let project = if let Some(ref q) = query {
+        let filtered: Vec<&Project> = projects.iter().filter(|p| p.name.contains(q)).collect();
+
+        if filtered.len() == 1 {
+            filtered[0].clone()
+        } else if filtered.len() > 1 {
+            prompt_project_selection(&projects, Some(q.clone()))?
+        } else {
+            prompt_project_selection(&projects, None)?
+        }
+    } else {
+        prompt_project_selection(&projects, None)?
+    };
 
     // If bare repo, show available worktrees
     let final_path = if project.is_bare_repo {
@@ -115,7 +132,7 @@ fn cmd_pick(tags: Option<Vec<String>>) -> Result<()> {
             Ok(worktrees) if !worktrees.is_empty() => {
                 let wt_selection = Select::new("Select a worktree:", worktrees)
                     .with_help_message("you can skip this to pick the project root")
-                    .with_vim_mode(false);
+                    .with_vim_mode(true);
 
                 match wt_selection.prompt_skippable() {
                     Ok(Some(selected)) => selected.path.clone(),
