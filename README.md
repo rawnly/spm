@@ -67,8 +67,14 @@ spm list -t rust,cli
 # Interactive project picker
 spm pick
 
+# Search for a specific project
+spm pick my-proj
+
 # Filter picker by tags
 spm pick -t work
+
+# Combine search and tag filter
+spm pick my-proj -t rust
 ```
 
 For bare repositories, the picker will let you select a specific worktree.
@@ -148,8 +154,14 @@ Once configured, use `sp` to quickly navigate:
 # Open interactive picker and cd to selected project
 sp
 
-# Pass arguments to spm
-sp list -t rust
+# Search for a project and cd to it
+sp my-proj
+
+# Filter by tags
+sp -t rust
+
+# Combine search and tag filter
+sp my-proj -t work
 ```
 
 ## Data Storage
