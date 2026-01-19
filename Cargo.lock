@@ -907,6 +907,7 @@ dependencies = [
  "chrono",
  "clap",
  "dirs",
+ "fuzzy-matcher",
  "git2",
  "indoc",
  "inquire",

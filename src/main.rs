@@ -9,6 +9,9 @@ use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, Command, ConfigAction};
 use config::Config;
+use fuzzy_matcher::skim::SkimMatcherV2;
+use fuzzy_matcher::FuzzyMatcher;
+use inquire::type_aliases::Scorer;
 use inquire::Select;
 use project::Project;
 use std::path::PathBuf;
@@ -105,10 +108,15 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
         std::process::exit(1);
     }
 
+    let fuzzy_matcher = SkimMatcherV2::default();
+    let fuzzy_scorer: Scorer<Project> =
+        &|input, item, _, _| fuzzy_matcher.fuzzy_match(&item.name, input);
+
     let prompt_project_selection = |projects: &[Project], q: Option<String>| {
         Select::new("Select a project:", projects.to_vec())
             .with_starting_filter_input(&q.unwrap_or_default())
             .with_vim_mode(true)
+            .with_scorer(&fuzzy_scorer)
             .prompt()
     };
 
