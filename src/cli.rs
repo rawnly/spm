@@ -32,6 +32,9 @@ pub enum Command {
         /// Filter by tags
         #[arg(short, long, value_delimiter = ',')]
         tags: Option<Vec<String>>,
+
+        #[arg(long)]
+        json: bool,
     },
 
     /// Interactively select a project

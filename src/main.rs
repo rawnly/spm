@@ -22,7 +22,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
-        Command::List { tags } => cmd_list(tags),
+        Command::List { tags, json } => cmd_list(tags, json),
         Command::Pick { tags, query } => cmd_pick(query, tags),
         Command::Remove { name, all, tags } => cmd_remove(name, tags, all),
         Command::Init { shell } => cmd_init(shell),
@@ -64,13 +64,19 @@ fn cmd_add(path: PathBuf, name: Option<String>, tags: Option<Vec<String>>) -> Re
     Ok(())
 }
 
-fn cmd_list(tags: Option<Vec<String>>) -> Result<()> {
+fn cmd_list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
     let projects = storage.list_filtered(&tags);
+    let json_projects = serde_json::to_string(&projects)?;
 
     if projects.is_empty() {
-        println!("No projects found");
+        if json {
+            println!("{}", json_projects);
+        } else {
+            println!("No projects found");
+        }
+
         return Ok(());
     }
 
@@ -83,13 +89,20 @@ fn cmd_list(tags: Option<Vec<String>>) -> Result<()> {
 
         let bare_indicator = if project.is_bare_repo { " (bare)" } else { "" };
 
-        println!(
-            "{}{} - {}{}",
-            project.name,
-            bare_indicator,
-            project.path.display(),
-            tags_str
-        );
+        if !json {
+            println!(
+                "{}{} - {}{}",
+                project.name,
+                bare_indicator,
+                project.path.display(),
+                tags_str
+            );
+            continue;
+        }
+    }
+
+    if json {
+        println!("{}", json_projects);
     }
 
     Ok(())
