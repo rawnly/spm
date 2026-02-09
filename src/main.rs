@@ -171,6 +171,7 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     // If bare repo, show available worktrees
     let final_path = if project.is_bare_repo {
         match git::list_worktrees(&project.path) {
+            Ok(worktrees) if worktrees.len() == 1 => worktrees.first().unwrap().path.clone(),
             Ok(worktrees) if !worktrees.is_empty() => {
                 let wt_selection = Select::new("Select a worktree:", worktrees)
                     .with_help_message("you can skip this to pick the project root")
