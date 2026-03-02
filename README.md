@@ -3,6 +3,8 @@
 A fast, lightweight CLI tool to manage and navigate between your side projects.
 > this is something i built on top of my workflow, it might not be perfect but it works for me
 
+This tool adheres to the [smol contract](https://bower.sh/smol-contract) 
+
 ## Features
 
 - **Project Registry** - Track all your projects in one centralized location
