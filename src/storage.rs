@@ -1,6 +1,7 @@
 use crate::config::config_dir;
 use crate::project::Project;
 use anyhow::Result;
+use std::collections::BinaryHeap;
 use std::fs;
 use std::path::PathBuf;
 
@@ -69,18 +70,29 @@ impl Storage {
     }
 
     pub fn list(&self) -> Vec<&Project> {
-        self.projects.iter().collect()
+        let v: Vec<&Project> = self.projects.iter().collect();
+        let bh: BinaryHeap<&Project> = BinaryHeap::from(v);
+
+        bh.into_vec()
     }
 
     pub fn list_filtered(&self, tags: &[String]) -> Vec<&Project> {
         if tags.is_empty() {
-            self.projects.iter().collect()
+            self.list()
         } else {
-            self.projects
+            let v: Vec<&Project> = self
+                .projects
                 .iter()
                 .filter(|p| p.has_any_tag(tags))
-                .collect()
+                .collect();
+            let bh = BinaryHeap::from(v);
+
+            bh.into_vec()
         }
+    }
+
+    pub fn update_access(&mut self, name: &str) -> Result<()> {
+        self.update(name, |p| p.on_access())
     }
 
     pub fn find_by_name(&self, name: &str) -> Option<&Project> {

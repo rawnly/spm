@@ -35,6 +35,9 @@ pub enum Command {
 
         #[arg(long)]
         json: bool,
+
+        #[arg(long)]
+        debug: bool,
     },
 
     /// Interactively select a project

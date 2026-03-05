@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{fmt, path::PathBuf};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Project {
     pub name: String,
     pub path: PathBuf,
@@ -11,6 +11,8 @@ pub struct Project {
     #[serde(default)]
     pub is_bare_repo: bool,
     pub added_at: DateTime<Utc>,
+    pub last_opened_at: DateTime<Utc>,
+    pub visits: u32,
 }
 
 impl fmt::Display for Project {
@@ -31,7 +33,14 @@ impl Project {
             tags: Vec::new(),
             is_bare_repo,
             added_at: Utc::now(),
+            last_opened_at: Utc::now(),
+            visits: 0,
         }
+    }
+
+    pub fn on_access(&mut self) {
+        self.last_opened_at = Utc::now();
+        self.visits += 1;
     }
 
     pub fn with_tags(mut self, tags: Vec<String>) -> Self {
@@ -55,6 +64,36 @@ impl Project {
 
     pub fn has_any_tag(&self, tags: &[String]) -> bool {
         tags.iter().any(|t| self.has_tag(t))
+    }
+
+    pub fn exists(&self) -> bool {
+        self.path.try_exists().is_ok()
+    }
+
+    fn frecency(&self) -> f64 {
+        let now = Utc::now();
+        let dx = (now - self.last_opened_at).as_seconds_f64();
+        let rank = self.visits as f64 + 1.0;
+        match dx {
+            d if d < 3_600. => rank * 4.0,
+            d if d < 86_400. => rank * 2.0,
+            d if d < 604_800. => rank * 2.0,
+            _ => rank / 4.0,
+        }
+    }
+}
+
+impl PartialOrd for Project {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Project {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.frecency()
+            .total_cmp(&other.frecency())
+            .then_with(|| self.added_at.cmp(&other.added_at))
     }
 }
 

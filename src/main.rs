@@ -22,7 +22,7 @@ fn main() -> Result<()> {
 
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
-        Command::List { tags, json } => cmd_list(tags, json),
+        Command::List { tags, json, debug } => cmd_list(tags, json, debug),
         Command::Pick { tags, query } => cmd_pick(query, tags),
         Command::Remove { name, all, tags } => cmd_remove(name, tags, all),
         Command::Init { shell } => cmd_init(shell),
@@ -64,7 +64,7 @@ fn cmd_add(path: PathBuf, name: Option<String>, tags: Option<Vec<String>>) -> Re
     Ok(())
 }
 
-fn cmd_list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
+fn cmd_list(tags: Option<Vec<String>>, json: bool, debug: bool) -> Result<()> {
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
     let projects = storage.list_filtered(&tags);
@@ -88,10 +88,12 @@ fn cmd_list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
         };
 
         let bare_indicator = if project.is_bare_repo { " (bare)" } else { "" };
+        let broken_indicator = if project.exists() { "" } else { "!" };
 
         if !json {
             println!(
-                "{}{} - {}{}",
+                "{}{}{} - {}{}",
+                broken_indicator,
                 project.name,
                 bare_indicator,
                 project.path.display(),
@@ -109,7 +111,7 @@ fn cmd_list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
 }
 
 fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
-    let storage = Storage::load()?;
+    let mut storage = Storage::load()?;
 
     let projects: Vec<Project> = match tags {
         None => storage.list().into_iter().cloned().collect(),
@@ -119,6 +121,11 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     if projects.is_empty() {
         eprintln!("No projects available");
         std::process::exit(1);
+    }
+
+    if projects.iter().any(|p| !p.exists()) {
+        println!("WARN - Some projects points to non-existing path");
+        println!("use `spm list` to show broken projects")
     }
 
     let fuzzy_matcher = SkimMatcherV2::default();
@@ -189,6 +196,7 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
         project.path.clone()
     };
 
+    storage.update_access(&project.name)?;
     println!("{}", final_path.display());
 
     Ok(())
