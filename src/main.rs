@@ -5,23 +5,45 @@ mod project;
 mod shell;
 mod storage;
 
+/// Creates a fuzzy matcher and scorer variable for use with `inquire::Select`.
+/// Spaces in the input are stripped so "my proj" matches "my-project".
+///
+/// Usage: `fuzzy_scorer!(scorer_name, Type);`
+macro_rules! fuzzy_scorer {
+    ($name:ident, $T:ty) => {
+        let matcher =
+            ::std::cell::RefCell::new(::frizbee::Matcher::new("", &::frizbee::Config::default()));
+        let $name: ::inquire::type_aliases::Scorer<$T> = &|input, _, str_val, _| {
+            if input.is_empty() {
+                return Some(0);
+            }
+            let needle = input.replace(' ', "");
+            let mut m = matcher.borrow_mut();
+            m.set_needle(&needle);
+            m.smith_waterman_one(str_val.as_bytes(), 0, true)
+                .map(|r| r.score as i64)
+        };
+    };
+}
+
 use anyhow::Result;
 use clap::Parser;
 use cli::{Cli, Command, ConfigAction};
 use config::Config;
-use inquire::type_aliases::Scorer;
-use inquire::Select;
+use inquire::ui::{RenderConfig, Styled};
+use inquire::{Confirm, Select};
 use project::Project;
-use std::cell::RefCell;
 use std::path::PathBuf;
 use storage::Storage;
+
+use crate::git::Worktree;
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
-        Command::List { tags, json, debug } => cmd_list(tags, json, debug),
+        Command::List { tags, json } => cmd_list(tags, json),
         Command::Pick { tags, query } => cmd_pick(query, tags),
         Command::Remove { name, all, tags } => cmd_remove(name, tags, all),
         Command::Init { shell } => cmd_init(shell),
@@ -63,7 +85,7 @@ fn cmd_add(path: PathBuf, name: Option<String>, tags: Option<Vec<String>>) -> Re
     Ok(())
 }
 
-fn cmd_list(tags: Option<Vec<String>>, json: bool, debug: bool) -> Result<()> {
+fn cmd_list(tags: Option<Vec<String>>, json: bool) -> Result<()> {
     let storage = Storage::load()?;
     let tags = tags.unwrap_or_default();
     let projects = storage.list_filtered(&tags);
@@ -127,37 +149,32 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
         println!("use `spm list` to show broken projects")
     }
 
-    let matcher = RefCell::new(frizbee::Matcher::new("", &frizbee::Config::default()));
-    let fuzzy_scorer: Scorer<Project> = &|input, item, _, _| {
-        if input.is_empty() {
-            return Some(0);
-        }
-
-        let mut m = matcher.borrow_mut();
-        m.set_needle(input);
-        m.smith_waterman_one(item.name.as_bytes(), 0, true)
-            .map(|r| r.score as i64)
-    };
+    fuzzy_scorer!(fuzzy_project_scorer, Project);
 
     let prompt_project_selection = |projects: &[Project], q: Option<String>| {
         Select::new("Select a project:", projects.to_vec())
             .with_starting_filter_input(&q.unwrap_or_default())
             .with_vim_mode(false)
-            .with_scorer(&fuzzy_scorer)
+            .with_scorer(&fuzzy_project_scorer)
+            .with_render_config(
+                RenderConfig::default_colored()
+                    .with_scroll_up_prefix(Styled::new("↑"))
+                    .with_scroll_down_prefix(Styled::new("↓")),
+            )
             .prompt()
     };
 
     let project = if let Some(ref q) = query {
         let names: Vec<String> = projects.iter().map(|p| p.name.clone()).collect();
         let fuzzy_filtered = frizbee::match_list_indices(q, &names, &frizbee::Config::default());
-        let filtered: Vec<&Project> = fuzzy_filtered
+        let pre_filtered: Vec<&Project> = fuzzy_filtered
             .iter()
             .filter_map(|m| projects.get(m.index as usize))
             .collect();
 
-        if filtered.len() == 1 {
-            filtered[0].clone()
-        } else if filtered.len() > 1 {
+        if pre_filtered.len() == 1 {
+            pre_filtered[0].clone()
+        } else if pre_filtered.len() > 1 {
             prompt_project_selection(&projects, Some(q.clone()))?
         } else {
             prompt_project_selection(&projects, None)?
@@ -171,8 +188,11 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
         match git::list_worktrees(&project.path) {
             Ok(worktrees) if worktrees.len() == 1 => worktrees.first().unwrap().path.clone(),
             Ok(worktrees) if !worktrees.is_empty() => {
+                fuzzy_scorer!(fuzzy_worktree_scorer, Worktree);
+
                 let wt_selection = Select::new("Select a worktree:", worktrees)
-                    .with_help_message("you can skip this to pick the project root")
+                    .with_scorer(&fuzzy_worktree_scorer)
+                    .with_help_message("<ESC> to skip this and navigate to the project root")
                     .with_vim_mode(false);
 
                 match wt_selection.prompt_skippable() {
@@ -197,6 +217,11 @@ fn cmd_remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Res
     let mut storage = Storage::load()?;
 
     if all {
+        if !Confirm::new("Do you really want to remove all projects?").prompt()? {
+            println!("operation aborted by the user.");
+            return Ok(());
+        }
+
         match tags {
             None => {
                 for project in storage.list() {
@@ -224,11 +249,12 @@ fn cmd_remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Res
                 return Ok(());
             }
 
-            let options: Vec<String> = projects.iter().map(|p| p.name.clone()).collect();
+            fuzzy_scorer!(fuzzy_project_scorer, &Project);
+            let selected_project = Select::new("select a project:", projects)
+                .with_scorer(&fuzzy_project_scorer)
+                .prompt()?;
 
-            Select::new("Select project to remove:", options)
-                .with_vim_mode(false)
-                .prompt()?
+            selected_project.name.clone()
         }
     };
 
