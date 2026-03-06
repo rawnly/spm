@@ -156,13 +156,18 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     let prompt_project_selection = |projects: &[Project], q: Option<String>| {
         Select::new("Select a project:", projects.to_vec())
             .with_starting_filter_input(&q.unwrap_or_default())
-            .with_vim_mode(true)
+            .with_vim_mode(false)
             .with_scorer(&fuzzy_scorer)
             .prompt()
     };
 
     let project = if let Some(ref q) = query {
-        let filtered: Vec<&Project> = projects.iter().filter(|p| p.name.contains(q)).collect();
+        let names: Vec<String> = projects.iter().map(|p| p.name.clone()).collect();
+        let fuzzy_filtered = frizbee::match_list_indices(q, &names, &frizbee::Config::default());
+        let filtered: Vec<&Project> = fuzzy_filtered
+            .iter()
+            .filter_map(|m| projects.get(m.index as usize))
+            .collect();
 
         if filtered.len() == 1 {
             filtered[0].clone()
@@ -182,7 +187,7 @@ fn cmd_pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
             Ok(worktrees) if !worktrees.is_empty() => {
                 let wt_selection = Select::new("Select a worktree:", worktrees)
                     .with_help_message("you can skip this to pick the project root")
-                    .with_vim_mode(true);
+                    .with_vim_mode(false);
 
                 match wt_selection.prompt_skippable() {
                     Ok(Some(selected)) => selected.path.clone(),
@@ -236,7 +241,7 @@ fn cmd_remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Res
             let options: Vec<String> = projects.iter().map(|p| p.name.clone()).collect();
 
             Select::new("Select project to remove:", options)
-                .with_vim_mode(true)
+                .with_vim_mode(false)
                 .prompt()?
         }
     };
