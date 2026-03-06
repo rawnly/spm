@@ -1,0 +1,18 @@
+[tools]
+goreleaser = "latest"
+rust = { version = "1.90.0", profile = "default" }
+
+[tasks.install]
+run = "cargo install --path ."
+
+[tasks.build]
+run = "cargo build --release"
+
+[tasks.check]
+run = "cargo check"
+
+[tasks.release]
+run = "goreleaser build"
+
+[tasks.snapshot]
+run = "goreleaser build --snapshot --clean"
