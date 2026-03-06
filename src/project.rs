@@ -10,8 +10,11 @@ pub struct Project {
     pub tags: Vec<String>,
     #[serde(default)]
     pub is_bare_repo: bool,
+    #[serde(default = "Utc::now")]
     pub added_at: DateTime<Utc>,
+    #[serde(default = "Utc::now")]
     pub last_opened_at: DateTime<Utc>,
+    #[serde(default)]
     pub visits: u32,
 }
 
