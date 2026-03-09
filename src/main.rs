@@ -4,6 +4,8 @@ mod git;
 mod project;
 mod shell;
 mod storage;
+mod utils;
+mod version_check;
 
 /// Creates a fuzzy matcher and scorer variable for use with `inquire::Select`.
 /// Spaces in the input are stripped so "my proj" matches "my-project".
@@ -38,10 +40,13 @@ use storage::Storage;
 
 use crate::git::Worktree;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    match cli.command {
+    let check_process = tokio::spawn(async { version_check::is_update_available().await });
+
+    match cli.command.clone() {
         Command::Add { path, name, tags } => cmd_add(path, name, tags),
         Command::List { tags, json } => cmd_list(tags, json),
         Command::Pick { tags, query } => cmd_pick(query, tags),
@@ -53,7 +58,27 @@ fn main() -> Result<()> {
             remove,
         } => cmd_tag(project, tags, remove),
         Command::Config { action } => cmd_config(action),
+        Command::CheckUpdate => {
+            if let Some(v) = version_check::is_update_available().await? {
+                println!("A new version is available: {v}")
+            } else {
+                println!("Congrats! You're on the latest available version.")
+            }
+
+            Ok(())
+        }
+    }?;
+
+    if !matches!(cli.command, Command::CheckUpdate) {
+        if let Some(latest) = check_process.await?? {
+            println!();
+            println!("A new update is available: {latest}");
+            println!("Please update via: `brew update spm`");
+            println!();
+        }
     }
+
+    Ok(())
 }
 
 fn cmd_add(path: PathBuf, name: Option<String>, tags: Option<Vec<String>>) -> Result<()> {

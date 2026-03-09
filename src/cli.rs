@@ -2,7 +2,7 @@ use crate::config::Shell;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
-#[derive(Parser)]
+#[derive(Parser, Clone)]
 #[command(name = "spm")]
 #[command(about = "Side Project Manager - manage your projects", long_about = None)]
 pub struct Cli {
@@ -10,7 +10,7 @@ pub struct Cli {
     pub command: Command,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Clone)]
 pub enum Command {
     /// Add a project
     Add {
@@ -83,9 +83,11 @@ pub enum Command {
         #[command(subcommand)]
         action: ConfigAction,
     },
+
+    CheckUpdate,
 }
 
-#[derive(Subcommand)]
+#[derive(Subcommand, Clone)]
 pub enum ConfigAction {
     /// Get a configuration value
     Get {

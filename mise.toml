@@ -1,6 +1,6 @@
 [tools]
 goreleaser = "latest"
-rust = { version = "1.90.0", profile = "default" }
+rust = { version = "latest", profile = "default" }
 
 [tasks.install]
 run = "cargo install --path ."
