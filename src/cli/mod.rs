@@ -2,6 +2,8 @@ use crate::config::Shell;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
+pub mod commands;
+
 #[derive(Parser, Clone)]
 #[command(name = "spm")]
 #[command(about = "Side Project Manager - manage your projects", long_about = None)]
