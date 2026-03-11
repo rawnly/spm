@@ -9,9 +9,7 @@ mod version_check;
 
 use anyhow::Result;
 use clap::Parser;
-use cli::{Cli, Command, ConfigAction};
-use config::Config;
-use inquire::{Confirm, Select};
+use cli::{Cli, Command};
 use project::Project;
 use storage::Storage;
 

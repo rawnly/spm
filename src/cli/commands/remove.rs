@@ -17,14 +17,14 @@ pub fn remove(name: Option<String>, tags: Option<Vec<String>>, all: bool) -> Res
                     println!("Project {} removed", &project.name);
                 }
 
-                return storage.remove_all();
+                return Ok(storage.remove_all()?);
             }
             Some(tags) => {
                 for project in storage.list_filtered(&tags) {
                     println!("Project {} removed", &project.name);
                 }
 
-                return storage.remove_all_filtered(&tags);
+                return Ok(storage.remove_all_filtered(&tags)?);
             }
         }
     }
