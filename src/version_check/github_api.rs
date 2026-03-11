@@ -22,7 +22,7 @@ pub async fn fetch_latest_version() -> Result<Option<semver::Version>> {
         .send()
         .await?;
 
-    if response.status() == 404 {
+    if response.status() != 200 {
         return Ok(None);
     }
 
