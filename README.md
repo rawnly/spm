@@ -1,6 +1,6 @@
-# Side Project Manager (spm)
+# Bivio (bvo)
 
-A fast, lightweight CLI tool to manage and navigate between your side projects.
+A fast, lightweight CLI tool to manage and navigate between your projects.
 > this is something i built on top of my workflow, it might not be perfect but it works for me
 
 This tool adheres to the [smol contract](https://bower.sh/smol-contract) 
@@ -29,7 +29,7 @@ cd side-project-manager
 cargo build --release
 ```
 
-The binary will be available at `target/release/spm`.
+The binary will be available at `target/release/bvo`.
 
 ### Install locally
 
@@ -39,44 +39,55 @@ cargo install --path .
 
 ## Usage
 
+### Command Reference
+
+- `bvo add [path]` - Register a project (defaults to current directory)
+- `bvo list` - List all projects (use `--json` for machine output)
+- `bvo pick [query]` - Interactive picker with optional search
+- `bvo remove [name]` - Remove a project (alias: `rm`)
+- `bvo tag [project] [tags...]` - Add/remove tags (use `-r` to remove)
+- `bvo init [shell]` - Print shell integration hooks
+- `bvo config <get|set|view>` - Read or update settings
+- `bvo check-update` - Check for new releases
+
 ### Adding Projects
 
 ```bash
 # Add current directory as a project
-spm add
+bvo add
 
 # Add a specific path
-spm add /path/to/project
+bvo add /path/to/project
 
 # Add with custom name and tags
-spm add -n "my-awesome-project" -t rust,cli,work
+bvo add -n "my-awesome-project" -t rust,cli,work
 ```
 
 ### Listing Projects
 
 ```bash
 # List all projects
-spm list
+bvo list
 
 # Filter by tags
-spm list -t rust
-spm list -t rust,cli
+bvo list -t rust
+bvo list -t rust,cli
 ```
 
 ### Navigating to Projects
 
 ```bash
 # Interactive project picker
-spm pick
+bvo pick
 
 # Search for a specific project
-spm pick my-proj
+bvo pick my-proj
 
 # Filter picker by tags
-spm pick -t work
+bvo pick -t work
 
 # Combine search and tag filter
-spm pick my-proj -t rust
+bvo pick my-proj -t rust
 ```
 
 For bare repositories, the picker will let you select a specific worktree.
@@ -85,51 +96,51 @@ For bare repositories, the picker will let you select a specific worktree.
 
 ```bash
 # Add tags to a project
-spm tag my-project rust cli
+bvo tag my-project rust cli
 
 # Remove tags from a project
-spm tag my-project -r old-tag
+bvo tag my-project -r old-tag
 
 # Interactive tag management
-spm tag
+bvo tag
 ```
 
 ### Removing Projects
 
 ```bash
 # Remove by name
-spm remove my-project
+bvo remove my-project
 
 # Interactive removal
-spm rm
+bvo rm
 
 # Remove all projects with specific tags
-spm rm -t deprecated
+bvo rm -t deprecated
 
 # Remove all projects
-spm rm --all
+bvo rm --all
 ```
 
 ### Configuration
 
 ```bash
 # Get config value
-spm config get default_shell
+bvo config get default_shell
 
 # Set default shell
-spm config set default_shell zsh
+bvo config set default_shell zsh
 ```
 
 ## Shell Integration
 
-Generate a shell hook to quickly navigate between projects using `spm`.
+Generate a shell hook to quickly navigate between projects using `bvo`.
 
 ### Zsh
 
 Add to your `~/.zshrc`:
 
 ```bash
-eval "$(spm init)"
+eval "$(bvo init)"
 ```
 
 ### Bash
@@ -137,7 +148,7 @@ eval "$(spm init)"
 Add to your `~/.bashrc`:
 
 ```bash
-eval "$(spm init)"
+eval "$(bvo init)"
 ```
 
 ### Fish
@@ -145,33 +156,33 @@ eval "$(spm init)"
 Add to your `~/.config/fish/config.fish`:
 
 ```fish
-spm init | source
+bvo init | source
 ```
 
-### Using the `sp` command
+### Using the `bvo` command
 
-Once configured, use `sp` to quickly navigate:
+Once configured, use `bvo` to quickly navigate:
 
 ```bash
 # Open interactive picker and cd to selected project
-spm
+bvo
 
 # Search for a project and cd to it
-spm my-proj
+bvo my-proj
 
 # Filter by tags
-spm -t rust
+bvo -t rust
 
 # Combine search and tag filter
-spm my-proj -t work
+bvo my-proj -t work
 ```
 
 ## Data Storage
 
 Project data and configuration are stored in the XDG config directory:
 
-- Linux/macOS: `~/.config/spm/`
-- Windows: `%APPDATA%\spm\`
+- Linux/macOS: `~/.config/bvo/`
+- Windows: `%APPDATA%\bvo\`
 
 Files:
 - `projects.json` - Project registry

@@ -6,8 +6,11 @@ use strum::EnumIter;
 pub mod commands;
 
 #[derive(Parser, Clone)]
-#[command(name = "spm")]
-#[command(about = "Side Project Manager - manage your projects", long_about = None)]
+#[command(name = "bvo")]
+#[command(
+    about = "Bivio - your project wayfinder",
+    long_about = "Bivio is a fast project navigator with tags, fuzzy pickers, and first-class worktree support."
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
@@ -16,7 +19,7 @@ pub struct Cli {
 #[derive(Subcommand, Clone, EnumIter, strum_macros::Display)]
 #[strum(serialize_all = "kebab-case")]
 pub enum Command {
-    /// Add a project
+    /// Register a project (path, name, tags)
     Add {
         /// Project path (default: current directory)
         #[arg(default_value = ".")]
@@ -31,7 +34,7 @@ pub enum Command {
         tags: Option<Vec<String>>,
     },
 
-    /// List all projects
+    /// List projects (optionally filtered by tags)
     List {
         /// Filter by tags
         #[arg(short, long, value_delimiter = ',')]
@@ -41,7 +44,7 @@ pub enum Command {
         json: bool,
     },
 
-    /// Interactively select a project
+    /// Interactive picker with fuzzy search
     Pick {
         /// Search project
         query: Option<String>,
@@ -50,7 +53,7 @@ pub enum Command {
         tags: Option<Vec<String>>,
     },
 
-    /// Remove a project
+    /// Remove a project (alias: rm)
     #[command(alias = "rm")]
     Remove {
         #[arg(short, long)]
@@ -63,13 +66,13 @@ pub enum Command {
         name: Option<String>,
     },
 
-    /// Generate shell hooks
+    /// Print shell integration hooks
     Init {
         /// Shell to generate hooks for
         shell: Option<Shell>,
     },
 
-    /// Manage project tags
+    /// Add or remove project tags
     Tag {
         /// Project name
         project: Option<String>,
@@ -82,12 +85,13 @@ pub enum Command {
         remove: bool,
     },
 
-    /// Manage configuration
+    /// Read or update configuration
     Config {
         #[command(subcommand)]
         action: ConfigAction,
     },
 
+    /// Check for new releases
     CheckUpdate,
 }
 
