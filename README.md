@@ -41,14 +41,25 @@ cargo install --path .
 
 ### Command Reference
 
-- `bvo add [path]` - Register a project (defaults to current directory)
-- `bvo list` - List all projects (use `--json` for machine output)
-- `bvo pick [query]` - Interactive picker with optional search
-- `bvo remove [name]` - Remove a project (alias: `rm`)
-- `bvo tag [project] [tags...]` - Add/remove tags (use `-r` to remove)
-- `bvo init [shell]` - Print shell integration hooks
-- `bvo config <get|set|view>` - Read or update settings
-- `bvo check-update` - Check for new releases
+```bash
+Bivio - your project wayfinder
+
+Usage: bvo <COMMAND>
+
+Commands:
+  add           Register a project (path, name, tags)
+  list          List projects (optionally filtered by tags)
+  pick          Interactive picker with fuzzy search
+  remove        Remove a project (alias: rm)
+  init          Print shell integration hooks
+  tag           Add or remove project tags
+  config        Read or update configuration
+  check-update  Check for new releases
+  help          Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help  Print help (see more with '--help')
+```
 
 ### Adding Projects
 
