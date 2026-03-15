@@ -24,8 +24,8 @@ This tool adheres to the [smol contract](https://bower.sh/smol-contract)
 ### Build
 
 ```bash
-git clone https://github.com/rawnly/side-project-manager.git
-cd side-project-manager
+git clone https://github.com/rawnly/bivio.git
+cd bivio
 cargo build --release
 ```
 
