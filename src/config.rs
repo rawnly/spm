@@ -62,6 +62,8 @@ impl Config {
 }
 
 pub fn config_dir() -> PathBuf {
+    let binary = env!("CARGO_BIN_NAME");
+
     // Respect XDG_CONFIG_HOME if set (useful for tests)
     if let Ok(xdg) = std::env::var("XDG_CONFIG_HOME") {
         return PathBuf::from(xdg).join("spm");
@@ -69,7 +71,7 @@ pub fn config_dir() -> PathBuf {
 
     dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from("~/.config"))
-        .join("spm")
+        .join(binary)
 }
 
 #[cfg(test)]

@@ -47,7 +47,7 @@ brews:
   - repository:
       owner: rawnly
       name: homebrew-tap
-    homepage: https://github.com/rawnly/spm
+    homepage: https://github.com/rawnly/bivio
     description: "Side Project Manager"
     license: "MIT"
 

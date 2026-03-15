@@ -10,7 +10,7 @@ pub struct GithubRelease {
 
 pub async fn fetch_latest_version() -> Result<Option<semver::Version>> {
     let client = reqwest::Client::new();
-    let url = Url::parse("https://api.github.com/repos/rawnly/spm/releases/latest")?;
+    let url = Url::parse("https://api.github.com/repos/rawnly/bivio/releases/latest")?;
 
     let response = client
         .get(url)
@@ -18,7 +18,7 @@ pub async fn fetch_latest_version() -> Result<Option<semver::Version>> {
             "Accept",
             HeaderValue::from_static("application/vnd.github+json"),
         )
-        .header("User-Agent", HeaderValue::from_static("spm"))
+        .header("User-Agent", HeaderValue::from_static("bivio"))
         .send()
         .await?;
 

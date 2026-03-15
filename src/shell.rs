@@ -1,4 +1,3 @@
-
 use crate::{cli, config::Shell};
 use indoc::formatdoc;
 use strum::IntoEnumIterator;
@@ -17,7 +16,14 @@ pub fn detect_shell() -> Option<Shell> {
 
 pub fn generate_hook(shell: Shell) -> String {
     let binary_name = env!("CARGO_BIN_NAME");
-    let commands: Vec<String> = cli::Command::iter().map(|c| c.to_string()).collect();
+    let mut commands: Vec<String> = cli::Command::iter().map(|c| c.to_string()).collect();
+
+    commands.push("-v".to_string());
+    commands.push("--version".to_string());
+
+    commands.push("-h".to_string());
+    commands.push("--help".to_string());
+
     let commands = commands.join("|");
 
     match shell {
@@ -116,27 +122,27 @@ mod tests {
     #[test]
     fn test_zsh_hook() {
         let hook = generate_hook(Shell::Zsh);
-        assert!(hook.contains("function spm()"));
-        assert!(hook.contains("command spm pick"));
-        assert!(hook.contains("command spm pick \"$@\""));
+        assert!(hook.contains("function bvo()"));
+        assert!(hook.contains("command bvo pick"));
+        assert!(hook.contains("command bvo pick \"$@\""));
         assert!(hook.contains("cd \"$dir\""));
     }
 
     #[test]
     fn test_bash_hook() {
         let hook = generate_hook(Shell::Bash);
-        assert!(hook.contains("function spm()"));
-        assert!(hook.contains("command spm pick"));
-        assert!(hook.contains("command spm pick \"$@\""));
+        assert!(hook.contains("function bvo()"));
+        assert!(hook.contains("command bvo pick"));
+        assert!(hook.contains("command bvo pick \"$@\""));
         assert!(hook.contains("cd \"$dir\""));
     }
 
     #[test]
     fn test_fish_hook() {
         let hook = generate_hook(Shell::Fish);
-        assert!(hook.contains("function spm"));
-        assert!(hook.contains("command spm pick"));
-        assert!(hook.contains("command spm pick $argv"));
+        assert!(hook.contains("function bvo"));
+        assert!(hook.contains("command bvo pick"));
+        assert!(hook.contains("command bvo pick $argv"));
         assert!(hook.contains("cd $dir"));
     }
 

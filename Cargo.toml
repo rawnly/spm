@@ -1,7 +1,11 @@
 [package]
-name = "bvo"
+name = "bivio"
 version = "0.1.3"
 edition = "2021"
+
+[[bin]]
+name = "bvo"
+path = "./src/main.rs"
 
 [dependencies]
 anyhow = "1.0"

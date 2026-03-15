@@ -46,7 +46,7 @@ async fn main() -> Result<()> {
         if let Some(latest) = check_process.await?? {
             println!();
             println!("A new update is available: {latest}");
-            println!("Please update via: `brew update spm`");
+            println!("Please update via: `brew update bivio`");
             println!();
         }
     }

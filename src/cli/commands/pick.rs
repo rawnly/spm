@@ -19,8 +19,10 @@ pub fn pick(query: Option<String>, tags: Option<Vec<String>>) -> Result<()> {
     }
 
     if projects.iter().any(|p| !p.exists()) {
+        let binary = env!("CARGO_BIN_NAME");
+
         println!("WARN - Some projects points to non-existing path");
-        println!("use `spm list` to show broken projects")
+        println!("run `{binary} list` to show broken projects")
     }
 
     fuzzy_scorer!(fuzzy_project_scorer, Project);
