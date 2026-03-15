@@ -1,6 +1,6 @@
 [package]
 name = "spm"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 [dependencies]
@@ -19,3 +19,4 @@ frizbee = "0.8.2"
 semver = "1.0.27"
 reqwest = { version = "0.13.2", features = ["json"] }
 tokio = { version = "1.50.0", features = ["full"] }
+strum_macros = "0.28.0"

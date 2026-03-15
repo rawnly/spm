@@ -12,6 +12,7 @@ use clap::Parser;
 use cli::{Cli, Command};
 use project::Project;
 use storage::Storage;
+use strum::IntoEnumIterator;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -54,8 +55,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn cmd_init(shell: config::Shell) -> Result<()> {
-    let hook = shell::generate_hook(shell);
+fn cmd_init(shell: Option<config::Shell>) -> Result<()> {
+    let resolved_shell = shell
+        .or_else(shell::detect_shell)
+        .unwrap_or(config::Shell::Zsh);
+    let hook = shell::generate_hook(resolved_shell);
     println!("{}", hook);
     Ok(())
 }

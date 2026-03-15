@@ -1,6 +1,7 @@
 use crate::config::Shell;
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use strum::EnumIter;
 
 pub mod commands;
 
@@ -12,7 +13,8 @@ pub struct Cli {
     pub command: Command,
 }
 
-#[derive(Subcommand, Clone)]
+#[derive(Subcommand, Clone, EnumIter, strum_macros::Display)]
+#[strum(serialize_all = "kebab-case")]
 pub enum Command {
     /// Add a project
     Add {
@@ -64,7 +66,7 @@ pub enum Command {
     /// Generate shell hooks
     Init {
         /// Shell to generate hooks for
-        shell: Shell,
+        shell: Option<Shell>,
     },
 
     /// Manage project tags
@@ -89,7 +91,7 @@ pub enum Command {
     CheckUpdate,
 }
 
-#[derive(Subcommand, Clone)]
+#[derive(Subcommand, Clone, Default)]
 pub enum ConfigAction {
     /// Get a configuration value
     Get {
@@ -106,5 +108,6 @@ pub enum ConfigAction {
     },
 
     /// Prints current configuration
+    #[default]
     View,
 }

@@ -122,14 +122,14 @@ spm config set default_shell zsh
 
 ## Shell Integration
 
-Generate a shell hook to quickly navigate between projects using the `sp` command.
+Generate a shell hook to quickly navigate between projects using `spm`.
 
 ### Zsh
 
 Add to your `~/.zshrc`:
 
 ```bash
-eval "$(spm init zsh)"
+eval "$(spm init)"
 ```
 
 ### Bash
@@ -137,7 +137,7 @@ eval "$(spm init zsh)"
 Add to your `~/.bashrc`:
 
 ```bash
-eval "$(spm init bash)"
+eval "$(spm init)"
 ```
 
 ### Fish
@@ -145,7 +145,7 @@ eval "$(spm init bash)"
 Add to your `~/.config/fish/config.fish`:
 
 ```fish
-spm init fish | source
+spm init | source
 ```
 
 ### Using the `sp` command
@@ -154,16 +154,16 @@ Once configured, use `sp` to quickly navigate:
 
 ```bash
 # Open interactive picker and cd to selected project
-sp
+spm
 
 # Search for a project and cd to it
-sp my-proj
+spm my-proj
 
 # Filter by tags
-sp -t rust
+spm -t rust
 
 # Combine search and tag filter
-sp my-proj -t work
+spm my-proj -t work
 ```
 
 ## Data Storage
